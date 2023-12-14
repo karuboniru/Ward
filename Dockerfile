@@ -7,15 +7,15 @@ COPY . .
 # Build project
 RUN mvn clean package
 
-# Base image containing OpenJDK 21
-FROM eclipse-temurin:21-jre
+FROM debian:11-slim AS download
+RUN apt-get update && apt-get install -y udev 
 
-# Copy the JAR file and pom.xml from the builder image to the working directory
+# Base image containing OpenJDK 17
+From gcr.io/distroless/java17-debian11
+ENV LIB_DIR_PREFIX x86_64
+COPY --from=download /usr/lib/${LIB_DIR_PREFIX}-linux-gnu/libudev.so.1 /usr/lib/${LIB_DIR_PREFIX}-linux-gnu/libudev.so.1
 COPY --from=builder target/*.jar /ward.jar
 COPY --from=builder pom.xml /pom.xml
-
-# Expose port 4000
 EXPOSE 4000
+ENTRYPOINT ["java", "-jar", "/ward.jar"]
 
-# Run the JAR file as sudo user on entry point
-ENTRYPOINT ["java", "-jar", "ward.jar"]
